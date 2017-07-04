@@ -29,7 +29,7 @@ import (
 	"github.com/jonboulle/clockwork"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	kubeapi "k8s.io/kubernetes/pkg/kubelet/api/v1alpha1/runtime"
+	kubeapi "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 
 	"github.com/Mirantis/virtlet/pkg/bolttools"
 	"github.com/Mirantis/virtlet/pkg/cni"
@@ -305,8 +305,8 @@ func (v *VirtletManager) PodSandboxStatus(ctx context.Context, in *kubeapi.PodSa
 			return nil, err
 		}
 
-		if netResult.IP4 != nil {
-			ip := netResult.IP4.IP.IP.String()
+		ip := cni.GetPodIP(netResult)
+		if ip != "" {
 			status.Network = &kubeapi.PodSandboxNetworkStatus{Ip: ip}
 		}
 	}
@@ -356,7 +356,7 @@ func (v *VirtletManager) CreateContainer(ctx context.Context, in *kubeapi.Create
 	}
 
 	netNSPath := cni.PodNetNSPath(podSandboxId)
-	glog.V(2).Infof("CreateContainer: imageName %s, ip %s, network namespace %s", config.GetImage().Image, netResult.IP4.IP.IP.String(), netNSPath)
+	glog.V(2).Infof("CreateContainer: imageName %q, ip %q, network namespace %q", config.GetImage().Image, cni.GetPodIP(netResult), netNSPath)
 
 	// TODO: use network configuration by CreateContainer
 	vmConfig, err := libvirttools.GetVMConfig(in)
@@ -484,6 +484,16 @@ func (v *VirtletManager) Status(context.Context, *kubeapi.StatusRequest) (*kubea
 			},
 		},
 	}, nil
+}
+
+func (v *VirtletManager) ContainerStats(ctx context.Context, in *kubeapi.ContainerStatsRequest) (*kubeapi.ContainerStatsResponse, error) {
+	glog.V(2).Infof("ContainerStats: %s", spew.Sdump(in))
+	return nil, errors.New("ContainerStats() not implemented")
+}
+
+func (v *VirtletManager) ListContainerStats(ctx context.Context, in *kubeapi.ListContainerStatsRequest) (*kubeapi.ListContainerStatsResponse, error) {
+	glog.V(2).Infof("ListContainerStats: %s", spew.Sdump(in))
+	return nil, errors.New("ListContainerStats() not implemented")
 }
 
 //
@@ -635,4 +645,9 @@ func (v *VirtletManager) RemoveImage(ctx context.Context, in *kubeapi.RemoveImag
 
 	response := &kubeapi.RemoveImageResponse{}
 	return response, nil
+}
+
+func (v *VirtletManager) ImageFsInfo(ctx context.Context, in *kubeapi.ImageFsInfoRequest) (*kubeapi.ImageFsInfoResponse, error) {
+	glog.V(2).Infof("ImageFsInfo: %s", spew.Sdump(in))
+	return nil, errors.New("ImageFsInfo() not implemented")
 }

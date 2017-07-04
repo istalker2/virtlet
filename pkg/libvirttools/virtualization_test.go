@@ -25,7 +25,7 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
-	kubeapi "k8s.io/kubernetes/pkg/kubelet/api/v1alpha1/runtime"
+	kubeapi "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 
 	"github.com/Mirantis/virtlet/pkg/bolttools"

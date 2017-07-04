@@ -28,7 +28,7 @@ import (
 	"github.com/jonboulle/clockwork"
 	libvirtxml "github.com/libvirt/libvirt-go-xml"
 	"k8s.io/apimachinery/pkg/fields"
-	kubeapi "k8s.io/kubernetes/pkg/kubelet/api/v1alpha1/runtime"
+	kubeapi "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 
 	"github.com/Mirantis/virtlet/pkg/metadata"
@@ -535,7 +535,7 @@ func (v *VirtualizationTool) getVMConfigFromMetadata(containerId string) (*VMCon
 	}
 	if containerInfo == nil {
 		// the vm is already removed
-		return nil, kubeapi.ContainerState_CONTAINER_UNKNOWN,  nil
+		return nil, kubeapi.ContainerState_CONTAINER_UNKNOWN, nil
 	}
 
 	// TODO: here we're using incomplete VMConfig to tear down the volumes
@@ -559,7 +559,7 @@ func (v *VirtualizationTool) getVMConfigFromMetadata(containerId string) (*VMCon
 }
 
 func (v *VirtualizationTool) cleanupVolumes(containerId string) error {
-	config, _,  err := v.getVMConfigFromMetadata(containerId)
+	config, _, err := v.getVMConfigFromMetadata(containerId)
 
 	if err != nil {
 		return err

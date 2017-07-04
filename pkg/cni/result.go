@@ -19,18 +19,29 @@ package cni
 import (
 	"encoding/json"
 
-	"github.com/containernetworking/cni/pkg/types"
+	"github.com/containernetworking/cni/pkg/types/current"
 )
 
-func ResultToBytes(result *types.Result) ([]byte, error) {
+func ResultToBytes(result *current.Result) ([]byte, error) {
 	return json.Marshal(result)
 }
 
-func BytesToResult(data []byte) (*types.Result, error) {
-	result := types.Result{}
-	if err := json.Unmarshal(data, &result); err != nil {
+func BytesToResult(data []byte) (*current.Result, error) {
+	r, err := current.NewResult(data)
+	if err != nil {
 		return nil, err
 	}
+	return r.(*current.Result), err
+}
 
-	return &result, nil
+// GetPodIP retrieves the IP address of the pod as a string. It uses
+// the first IPv4 address if finds. If it fails to determine the pod
+// IP, it returns an empty string.
+func GetPodIP(result *current.Result) string {
+	for _, ip := range result.IPs {
+		if ip.Version == "4" {
+			return ip.Address.IP.String()
+		}
+	}
+	return ""
 }

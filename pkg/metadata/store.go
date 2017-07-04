@@ -18,7 +18,7 @@ package metadata
 
 import (
 	"github.com/jonboulle/clockwork"
-	kubeapi "k8s.io/kubernetes/pkg/kubelet/api/v1alpha1/runtime"
+	kubeapi "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
 // ContainerInfo contains metadata informations about container instance

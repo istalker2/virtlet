@@ -38,13 +38,13 @@ import (
 	dockertypes "github.com/docker/engine-api/types"
 	dockercontainer "github.com/docker/engine-api/types/container"
 
+	"k8s.io/api/core/v1"
 	clientsetfake "k8s.io/client-go/kubernetes/fake"
-	"k8s.io/client-go/pkg/api/v1"
 	testingcore "k8s.io/client-go/testing"
 	k8sapi "k8s.io/kubernetes/pkg/api"
 	// testapi is needed to get default values in kubelet config
 	_ "k8s.io/kubernetes/pkg/api/testapi"
-	"k8s.io/kubernetes/pkg/kubelet/api/v1alpha1/stats"
+	stats "k8s.io/kubernetes/pkg/kubelet/apis/stats/v1alpha1"
 
 	cfg "k8s.io/kubernetes/pkg/apis/componentconfig/v1alpha1"
 )
@@ -86,8 +86,9 @@ func mustMarshalJson(data interface{}) []byte {
 func TestPatchKubeletConfig(t *testing.T) {
 	var kubeCfg cfg.KubeletConfiguration
 	k8sapi.Scheme.Default(&kubeCfg)
-	kubeCfg.CNIConfDir = "/etc/kubernetes/cni/net.d"
-	kubeCfg.CNIBinDir = "/usr/lib/kubernetes/cni/bin"
+	// TODO: fix this
+	// kubeCfg.CNIConfDir = "/etc/kubernetes/cni/net.d"
+	// kubeCfg.CNIBinDir = "/usr/lib/kubernetes/cni/bin"
 
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var v interface{}

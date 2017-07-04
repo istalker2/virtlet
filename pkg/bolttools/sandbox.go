@@ -24,7 +24,7 @@ import (
 	"github.com/boltdb/bolt"
 	"github.com/jonboulle/clockwork"
 	"k8s.io/apimachinery/pkg/fields"
-	kubeapi "k8s.io/kubernetes/pkg/kubelet/api/v1alpha1/runtime"
+	kubeapi "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
 func (b *BoltClient) EnsureSandboxSchema() error {

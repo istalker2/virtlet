@@ -116,17 +116,17 @@
       "Ephemeral": "no",
       "Private": "no",
       "Description": "",
-      "UUID": "",
+      "UUID": "231700d5-c9a6-5a49-738d-99a954c51550",
       "Usage": {
         "Type": "ceph",
         "Volume": "",
-        "Name": "libvirt-231700d5-c9a6-5a49-738d-99a954c51550-ceph",
+        "Name": "libvirt",
         "Target": ""
       }
     }
   },
   {
-    "name": "domain conn: secret libvirt-231700d5-c9a6-5a49-738d-99a954c51550-ceph: SetValue",
+    "name": "domain conn: secret 231700d5-c9a6-5a49-738d-99a954c51550: SetValue",
     "data": "66 6f 6f 62 61 72 0a"
   },
   {
@@ -295,8 +295,8 @@
               "Username": "libvirt",
               "Secret": {
                 "Type": "ceph",
-                "Usage": "libvirt-231700d5-c9a6-5a49-738d-99a954c51550-ceph",
-                "UUID": ""
+                "Usage": "",
+                "UUID": "231700d5-c9a6-5a49-738d-99a954c51550"
               }
             },
             "Source": {
@@ -498,6 +498,6 @@
     "data": "root_231700d5-c9a6-5a49-738d-99a954c51550"
   },
   {
-    "name": "domain conn: secret libvirt-231700d5-c9a6-5a49-738d-99a954c51550-ceph: Remove"
+    "name": "domain conn: secret 231700d5-c9a6-5a49-738d-99a954c51550: Remove"
   }
 ]

@@ -31,15 +31,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package dockershim
 
 import (
 	"errors"
+	goflag "flag"
 	"fmt"
 	"net"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"strings"
 
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
@@ -49,11 +51,11 @@ import (
 	"k8s.io/kubernetes/cmd/kubelet/app/options"
 	"k8s.io/kubernetes/pkg/apis/componentconfig"
 	"k8s.io/kubernetes/pkg/kubelet"
-	"k8s.io/kubernetes/pkg/kubelet/dockershim"
+	dshim "k8s.io/kubernetes/pkg/kubelet/dockershim"
 	"k8s.io/kubernetes/pkg/kubelet/dockershim/libdocker"
 	dockerremote "k8s.io/kubernetes/pkg/kubelet/dockershim/remote"
 	"k8s.io/kubernetes/pkg/kubelet/server/streaming"
-	"k8s.io/kubernetes/pkg/version/verflag"
+	nodeutil "k8s.io/kubernetes/pkg/util/node"
 )
 
 func getAddressForStreaming() (string, error) {
@@ -71,9 +73,9 @@ func getAddressForStreaming() (string, error) {
 	return "", errors.New("unable to get IP address")
 }
 
-// RunDockershim only starts the dockershim in current process. This is only used for cri validate testing purpose
+// doRunDockershim only starts the dockershim in current process. This is only used for cri validate testing purpose
 // TODO(random-liu): Move this to a separate binary.
-func RunDockershim(c *componentconfig.KubeletConfiguration, r *options.ContainerRuntimeOptions) error {
+func doRunDockershim(c *componentconfig.KubeletConfiguration, r *options.ContainerRuntimeOptions) error {
 	streamingAddr, err := getAddressForStreaming()
 	if err != nil {
 		return err
@@ -89,7 +91,7 @@ func RunDockershim(c *componentconfig.KubeletConfiguration, r *options.Container
 		binDir = r.NetworkPluginDir
 	}
 	nh := &kubelet.NoOpLegacyHost{}
-	pluginSettings := dockershim.NetworkPluginSettings{
+	pluginSettings := dshim.NetworkPluginSettings{
 		HairpinMode:       componentconfig.HairpinMode(c.HairpinMode),
 		NonMasqueradeCIDR: c.NonMasqueradeCIDR,
 		PluginName:        r.NetworkPluginName,
@@ -108,7 +110,7 @@ func RunDockershim(c *componentconfig.KubeletConfiguration, r *options.Container
 		SupportedPortForwardProtocols:   streaming.DefaultConfig.SupportedPortForwardProtocols,
 	}
 
-	ds, err := dockershim.NewDockerService(dockerClient, c.SeccompProfileRoot, r.PodSandboxImage,
+	ds, err := dshim.NewDockerService(dockerClient, c.SeccompProfileRoot, r.PodSandboxImage,
 		streamingConfig, &pluginSettings, c.RuntimeCgroups, c.CgroupDriver, r.DockerExecHandlerName, r.DockershimRootDirectory,
 		r.DockerDisableSharedPID)
 	if err != nil {
@@ -128,18 +130,52 @@ func RunDockershim(c *componentconfig.KubeletConfiguration, r *options.Container
 	return http.ListenAndServe(streamingConfig.Addr, ds)
 }
 
-func main() {
+// InitFlags normalizes, parses, then logs the command line flags
+func initFlags(arguments []string) {
+	pflag.CommandLine.SetNormalizeFunc(flag.WordSepNormalizeFunc)
+	pflag.CommandLine.AddGoFlagSet(goflag.CommandLine)
+	pflag.CommandLine.Parse(arguments)
+	pflag.Parse()
+	pflag.VisitAll(func(flag *pflag.Flag) {
+		glog.V(4).Infof("FLAG: --%s=%q", flag.Name, flag.Value)
+	})
+}
+
+type KubeletWrapper struct {
+	s *options.KubeletServer
+}
+
+func NewKubeletWrapper(arguments []string) *KubeletWrapper {
 	s := options.NewKubeletServer()
 	s.AddFlags(pflag.CommandLine)
+	return &KubeletWrapper{s}
+}
 
-	flag.InitFlags()
+func (k *KubeletWrapper) RunDockershim() {
 	logs.InitLogs()
 	defer logs.FlushLogs()
-
-	verflag.PrintAndExitIfRequested()
-
-	if err := RunDockershim(&s.KubeletConfiguration, &s.ContainerRuntimeOptions); err != nil {
+	if err := doRunDockershim(&k.s.KubeletConfiguration, &k.s.ContainerRuntimeOptions); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
+}
+
+func (k *KubeletWrapper) NodeName() string {
+	// NOTE: this will not work with cloud providers, but that's
+	// not the kind of situation we're expecting to happen when
+	// using CRI proxy bootstrap where this func is to be used
+	return nodeutil.GetHostname(k.s.HostnameOverride)
+}
+
+func (k *KubeletWrapper) DockerEndpoint() string {
+	return k.s.DockerEndpoint
+}
+
+func (k *KubeletWrapper) Endpoint() string {
+	ep := k.s.RemoteRuntimeEndpoint
+	if strings.HasPrefix(ep, "unix://") {
+		return ep[7:]
+	}
+	// FIXME: probably should error here
+	return ep
 }

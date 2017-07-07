@@ -572,11 +572,16 @@ func TeardownBridge(bridge netlink.Link, links []netlink.Link) error {
 
 // ConfigureLink adds to link ip address and routes based on info.
 func ConfigureLink(link netlink.Link, info *current.Result) error {
-	ip := cni.GetPodIP(info)
-	if ip == "" {
+	var addr *netlink.Addr
+	for _, ip := range info.IPs {
+		if ip.Version == "4" {
+			addr = &netlink.Addr{IPNet: &ip.Address}
+		}
+	}
+	if addr == nil {
 		return fmt.Errorf("can't get IP from cni result: %v", info)
 	}
-	if err := netlink.AddrAdd(link, mustParseAddr(ip)); err != nil {
+	if err := netlink.AddrAdd(link, addr); err != nil {
 		return err
 	}
 

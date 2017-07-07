@@ -278,6 +278,13 @@ demo::start-dind-cluster
 if [[ ${INJECT_LOCAL_IMAGE:-} ]]; then
   demo::inject-local-image
 fi
+while ! "${kubectl}" get pods --all-namespaces || ! "${kubectl}" get nodes; do
+  echo "checkcheckcheck" >&2
+  docker ps >&2
+  free >&2
+  sleep 1
+done
+
 demo::label-node
 demo::start-virtlet
 demo::start-nginx
